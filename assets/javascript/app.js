@@ -1,101 +1,100 @@
-$(document).ready(function() {// Initialize Firebase
-var config = {
-    apiKey: "AIzaSyBWLlt3a2HfxtcuGW8IPfk7etsXhQtAmHI",
-    authDomain: "firstproject-c5433.firebaseapp.com",
-    databaseURL: "https://firstproject-c5433.firebaseio.com",
-    storageBucket: "firstproject-c5433.appspot.com",
-    messagingSenderId: "527205288560"
-};
-firebase.initializeApp(config);
+$(document).ready(function() {
 
-var database = firebase.database();
+    var config = {
+        apiKey: "AIzaSyBWLlt3a2HfxtcuGW8IPfk7etsXhQtAmHI",
+        authDomain: "firstproject-c5433.firebaseapp.com",
+        databaseURL: "https://firstproject-c5433.firebaseio.com",
+        storageBucket: "firstproject-c5433.appspot.com",
+        messagingSenderId: "527205288560"
+    };
 
-// Initial Values
+    firebase.initializeApp(config);
 
-var minutesAway = 0;
-var trainName = "";
-var destination = "";
-var firstTrain = 0;
-var frequency = 0;
+    var database = firebase.database();
+
+    // Initial Values
+
+    var minutesAway = 0;
+    var trainName = "";
+    var destination = "";
+    var firstTrain = 0;
+    var frequency = 0;
 
 
-// Capture Button Click
-$("#submit-btn").on("click", function(event) {
-    event.preventDefault();
+    // Capture Button Click
+    $("#submit-btn").on("click", function(event) {
+        event.preventDefault();
 
-  // Grabbed values from text boxes
-  trainName = $("#train-name").val().trim();
-  destination = $("#destination").val().trim();
-  firstTrain = $("#first-train").val().trim();
-  frequency = $("#frequency").val().trim();
+        // Grabbed values from text boxes
+        trainName = $("#train-name").val().trim();
+        destination = $("#destination").val().trim();
+        firstTrain = $("#first-train").val().trim();
+        frequency = $("#frequency").val().trim();
 
-    // Code for handling the push
-    database.ref().push({
-        name: trainName,
-        destination: destination,
-        firstTrain: firstTrain,
-        frequency: frequency,
-        dateAdded: firebase.database.ServerValue.TIMESTAMP
-    });
+        // Code for handling the push
+        database.ref().push({
+            name: trainName,
+            destination: destination,
+            firstTrain: firstTrain,
+            frequency: frequency,
+            dateAdded: firebase.database.ServerValue.TIMESTAMP
+        });
 
         //empty the form
         $("#train-name").val("");
         $("#destination").val("");
         $("#first-train").val("");
         $("#frequency").val("");
-});
+    });
 
-// Firebase watcher + initial loader HINT: This code behaves similarly to .on("value")
-database.ref().on("child_added", function(childSnapshot) {
+    // Firebase watcher + initial loader HINT: This code behaves similarly to .on("value")
+    database.ref().on("child_added", function(childSnapshot) {
 
-  var nameVar = childSnapshot.val().name;
-  var destinationVar = childSnapshot.val().destination;
-  var firstTrainVar = childSnapshot.val().firstTrain;
-  var frequencyVar = childSnapshot.val().frequency;
-  
-  console.log(destinationVar);
-  console.log(nameVar);
-  console.log(firstTrainVar);
-  console.log(frequencyVar);
-// To calculate the minutes till arrival, take the current time in unix subtract the FirstTrain 
-//time and find the modulus between the difference and the frequency  
+        var nameVar = childSnapshot.val().name;
+        var destinationVar = childSnapshot.val().destination;
+        var firstTrainVar = childSnapshot.val().firstTrain;
+        var frequencyVar = childSnapshot.val().frequency;
 
-var differenceTimes = moment().diff(moment(firstTrainVar, "HH:mm"), "minutes")
-console.log(differenceTimes);
+        console.log(destinationVar);
+        console.log(nameVar);
+        console.log(firstTrainVar);
+        console.log(frequencyVar); 
 
-if (differenceTimes > 0){
-  var remainder = differenceTimes % frequencyVar;
-  var hoursMinsAway = frequencyVar - remainder;
-  console.log(hoursMinsAway);
-  var nextArrival = moment().add(hoursMinsAway, "m").format("HH:mm");
-}
+        //Get the times
+        var differenceTimes = moment().diff(moment(firstTrainVar, "HH:mm"), "minutes")
+        console.log(differenceTimes);
 
-else{
-  var nextArrival = firstTrainVar;
-  console.log(firstTrainVar);
-  var positiveNum = differenceTimes * -1;
-  console.log(positiveNum);
-  var hoursMinsAway = moment.utc().startOf('day').add(positiveNum, 'minutes').format('HH:mm');
-  console.log(hoursMinsAway);
-}
+        if (differenceTimes > 0) {
+            var remainder = differenceTimes % frequencyVar;
+            var hoursMinsAway = frequencyVar - remainder;
+            console.log(hoursMinsAway);
+            var nextArrival = moment().add(hoursMinsAway, "m").format("HH:mm");
+        } else {
+            var nextArrival = firstTrainVar;
+            console.log(firstTrainVar);
+            var positiveNum = differenceTimes * -1;
+            console.log(positiveNum);
+            var hoursMinsAway = moment.utc().startOf('day').add(positiveNum, 'minutes').format('HH:mm');
+            console.log(hoursMinsAway);
+        }
 
 
-//Push to DOM
-var tableRow = $("<tr>");
-tableRow.attr("data-key", childSnapshot.key);
-var tableTrainName   = $("<td>" + childSnapshot.val().name + "</td>");
-var tableDestination = $("<td>" + childSnapshot.val().destination + "</td>");
-var tableFrequency   = $("<td>" + childSnapshot.val().frequency + "</td>");
-var tableNextArrival = $("<td>" + nextArrival + "</td>");
-var tableMinutesAway = $("<td>" + hoursMinsAway + "</td>");
+        //Push to DOM
+        var tableRow = $("<tr>");
+        tableRow.attr("data-key", childSnapshot.key);
+        var tableTrainName = $("<td>" + childSnapshot.val().name + "</td>");
+        var tableDestination = $("<td>" + childSnapshot.val().destination + "</td>");
+        var tableFrequency = $("<td>" + childSnapshot.val().frequency + "</td>");
+        var tableNextArrival = $("<td>" + nextArrival + "</td>");
+        var tableMinutesAway = $("<td>" + hoursMinsAway + "</td>");
 
-tableRow.append(tableTrainName, tableDestination, tableFrequency, tableNextArrival, tableMinutesAway);
-$("tbody").append(tableRow);
+        tableRow.append(tableTrainName, tableDestination, tableFrequency, tableNextArrival, tableMinutesAway);
+        $("tbody").append(tableRow);
 
-// Handle the errors
-}, function(errorObject){
-  //console.log("Errors handled: " + errorObject.code)
+        // Handle the errors
+    }, function(errorObject) {
+        console.log("Errors handled: " + errorObject.code)
 
 
-});
+    });
 });
