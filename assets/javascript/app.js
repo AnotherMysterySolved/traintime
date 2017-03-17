@@ -55,27 +55,19 @@ $(document).ready(function() {
         var firstTrainVar = childSnapshot.val().firstTrain;
         var frequencyVar = childSnapshot.val().frequency;
 
-        console.log(destinationVar);
-        console.log(nameVar);
-        console.log(firstTrainVar);
-        console.log(frequencyVar); 
-
-        //Get the times
-        var differenceTimes = moment().diff(moment(firstTrainVar, "HH:mm"), "minutes")
-        console.log(differenceTimes);
-
+        //current time - first train time (in minutes)
+        var differenceTimes = moment().diff(moment(firstTrainVar, "HH:mm"), "minutes");
+        //if > 0, get remainder and subtract from frequency = hoursMinsAway. hoursMinsAway + current time = nextArrival
         if (differenceTimes > 0) {
             var remainder = differenceTimes % frequencyVar;
             var hoursMinsAway = frequencyVar - remainder;
-            console.log(hoursMinsAway);
             var nextArrival = moment().add(hoursMinsAway, "m").format("HH:mm");
-        } else {
+        }
+        //nextArrival = firstTrainVar. Make differenceTimes positive and add to current time = hoursMinsAway
+        else {
             var nextArrival = firstTrainVar;
-            console.log(firstTrainVar);
             var positiveNum = differenceTimes * -1;
-            console.log(positiveNum);
             var hoursMinsAway = moment.utc().startOf('day').add(positiveNum, 'minutes').format('HH:mm');
-            console.log(hoursMinsAway);
         }
 
 
