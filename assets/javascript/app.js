@@ -1,67 +1,101 @@
-// Initialize Firebase
+$(document).ready(function() {// Initialize Firebase
 var config = {
-  apiKey: "AIzaSyBWLlt3a2HfxtcuGW8IPfk7etsXhQtAmHI",
-  authDomain: "firstproject-c5433.firebaseapp.com",
-  databaseURL: "https://firstproject-c5433.firebaseio.com",
-  storageBucket: "firstproject-c5433.appspot.com",
-  messagingSenderId: "527205288560"
+    apiKey: "AIzaSyBWLlt3a2HfxtcuGW8IPfk7etsXhQtAmHI",
+    authDomain: "firstproject-c5433.firebaseapp.com",
+    databaseURL: "https://firstproject-c5433.firebaseio.com",
+    storageBucket: "firstproject-c5433.appspot.com",
+    messagingSenderId: "527205288560"
 };
 firebase.initializeApp(config);
 
 var database = firebase.database();
 
 // Initial Values
-var nextArrival;
-var minutesAway;
+
+var minutesAway = 0;
+var trainName = "";
+var destination = "";
+var firstTrain = 0;
+var frequency = 0;
+
 
 // Capture Button Click
 $("#submit-btn").on("click", function(event) {
-  console.log("done");
-  event.preventDefault();
+    event.preventDefault();
 
   // Grabbed values from text boxes
-  var trainName = $("#train-name").val().trim();
-  var destination = $("#destination").val().trim();
-  var firstTrain = $("#first-train").val().trim();
-  var frequency = $("#frequency").val().trim();
+  trainName = $("#train-name").val().trim();
+  destination = $("#destination").val().trim();
+  firstTrain = $("#first-train").val().trim();
+  frequency = $("#frequency").val().trim();
 
-  // Code for handling the push
-  database.ref().push({
-    name: trainName,
-    destination: destination,
-    firstTrain: firstTrain,
-    frequency: frequency,
-    dateAdded: firebase.database.ServerValue.TIMESTAMP
-  });
+    // Code for handling the push
+    database.ref().push({
+        name: trainName,
+        destination: destination,
+        firstTrain: firstTrain,
+        frequency: frequency,
+        dateAdded: firebase.database.ServerValue.TIMESTAMP
+    });
 
+        //empty the form
+        $("#train-name").val("");
+        $("#destination").val("");
+        $("#first-train").val("");
+        $("#frequency").val("");
 });
 
 // Firebase watcher + initial loader HINT: This code behaves similarly to .on("value")
 database.ref().on("child_added", function(childSnapshot) {
 
-  // Log everything that's coming out of snapshot
-  //console.log(childSnapshot.val().name);
-  //console.log(childSnapshot.val().role);
-  //console.log(childSnapshot.val().startDate);
-  //console.log(childSnapshot.val().monthlyRate);
+  var nameVar = childSnapshot.val().name;
+  var destinationVar = childSnapshot.val().destination;
+  var firstTrainVar = childSnapshot.val().firstTrain;
+  var frequencyVar = childSnapshot.val().frequency;
+  
+  console.log(destinationVar);
+  console.log(nameVar);
+  console.log(firstTrainVar);
+  console.log(frequencyVar);
+// To calculate the minutes till arrival, take the current time in unix subtract the FirstTrain 
+//time and find the modulus between the difference and the frequency  
 
-  //Start date math
-  // numMonths = (moment().diff(moment(childSnapshot.val().startDate), 'months'));
-  // console.log(numMonths);
+var differenceTimes = moment().diff(moment(firstTrainVar, "HH:mm"), "minutes")
+console.log(differenceTimes);
 
-  // totalBilled = numMonths * childSnapshot.val().monthlyRate;
+if (differenceTimes > 0){
+  var remainder = differenceTimes % frequencyVar;
+  var hoursMinsAway = frequencyVar - remainder;
+  console.log(hoursMinsAway);
+  var nextArrival = moment().add(hoursMinsAway, "m").format("HH:mm");
+}
+
+else{
+  var nextArrival = firstTrainVar;
+  console.log(firstTrainVar);
+  var positiveNum = differenceTimes * -1;
+  console.log(positiveNum);
+  var hoursMinsAway = moment.utc().startOf('day').add(positiveNum, 'minutes').format('HH:mm');
+  console.log(hoursMinsAway);
+}
 
 
-  var tableRow = $("<tr>");
-  tableRow.attr("data-key", childSnapshot.key);
-  var tableName = $("<td>"+childSnapshot.val().name+"</td>");
-  var tableRole = $("<td>"+childSnapshot.val().role+"</td>");
-  var tableStartDate = $("<td>"+childSnapshot.val().startDate+"</td>");
-  var tableWorked = $("<td>"+numMonths+"</td>");
-  var tableMonthlyRate = $("<td>"+childSnapshot.val().monthlyRate+"</td>");
-  var tableBilled = $("<td>"+totalBilled+"</td>");
-  tableRow.append(tableName,tableRole,tableStartDate,tableWorked,tableMonthlyRate,totalBilled);
-  $("tbody").append(tableRow);
+//Push to DOM
+var tableRow = $("<tr>");
+tableRow.attr("data-key", childSnapshot.key);
+var tableTrainName   = $("<td>" + childSnapshot.val().name + "</td>");
+var tableDestination = $("<td>" + childSnapshot.val().destination + "</td>");
+var tableFrequency   = $("<td>" + childSnapshot.val().frequency + "</td>");
+var tableNextArrival = $("<td>" + nextArrival + "</td>");
+var tableMinutesAway = $("<td>" + hoursMinsAway + "</td>");
+
+tableRow.append(tableTrainName, tableDestination, tableFrequency, tableNextArrival, tableMinutesAway);
+$("tbody").append(tableRow);
+
+// Handle the errors
+}, function(errorObject){
+  //console.log("Errors handled: " + errorObject.code)
 
 
+});
 });
